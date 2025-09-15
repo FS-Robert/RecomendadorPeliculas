@@ -115,7 +115,7 @@ if pelicula_seleccionada:
                         unsafe_allow_html=True
                     )
                     col.caption(f"Similitud: {int(score*100)}%")
-                    if poster:
+                    """if poster:
                         col.image(poster, width='stretch')  # Sustituye use_container_width
                     else:
                         col.write("❌ No hay ningún poster disponible")
@@ -123,3 +123,4 @@ if pelicula_seleccionada:
         st.error("No se encontró la película seleccionada. Intenta otra.")
     except Exception as e:
         st.error(f"Ocurrió un error inesperado: {e}")
+"""

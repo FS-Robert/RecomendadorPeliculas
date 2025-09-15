@@ -4,7 +4,6 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import CountVectorizer
 import requests
 import re
-import numpy as np
 
 # ==========================
 # Configuración OMDb
@@ -30,6 +29,9 @@ def obtener_poster(titulo):
 movies = pd.read_csv("movies.csv")
 ratings = pd.read_csv("ratings.csv")
 
+# Crear columna de títulos limpios para evitar errores
+movies['clean_title'] = movies['title'].str.replace(r'\(\d{4}\)', '', regex=True).str.strip()
+
 # -------------------
 # Filtrado colaborativo
 # -------------------
@@ -38,10 +40,10 @@ collab_sim = cosine_similarity(ratings_matrix.T)
 collab_df = pd.DataFrame(collab_sim, index=ratings_matrix.columns, columns=ratings_matrix.columns)
 
 # -------------------
-# Filtrado por contenido (géneros + título)
+# Filtrado por contenido
 # -------------------
 movies["genres"] = movies["genres"].str.replace("|", " ")
-movies["content"] = movies["genres"] + " " + movies["title"].str.replace(r'\(\d{4}\)', '', regex=True)
+movies["content"] = movies["genres"] + " " + movies["clean_title"]
 vectorizer = CountVectorizer()
 content_matrix = vectorizer.fit_transform(movies["content"])
 content_sim = cosine_similarity(content_matrix, content_matrix)
@@ -70,40 +72,46 @@ def recomendar_peliculas(movie_id, num_recomendaciones=5, alpha=0.5):
 # ==========================
 # Interfaz Streamlit
 # ==========================
-st.title("🎬 Recomendador  de Películas")
+st.title("🎬 Recomendador de Películas")
 st.write("Selecciona una película y obtén recomendaciones combinando ratings y contenido:")
 
-pelicula_seleccionada = st.selectbox("Elige una película:", movies["title"].head(500).values)
+pelicula_seleccionada = st.selectbox("Elige una película:", movies["clean_title"].head(500).values)
 
 if pelicula_seleccionada:
-    movie_id = movies[movies['title'] == pelicula_seleccionada]['movieId'].values[0]
-    recomendaciones = recomendar_peliculas(movie_id, num_recomendaciones=5, alpha=0.5)
+    try:
+        movie_id = movies.loc[movies['clean_title'] == pelicula_seleccionada, 'movieId'].iloc[0]
+        st.write(f"Movie ID encontrado: {movie_id}")  # Log de depuración
+        recomendaciones = recomendar_peliculas(movie_id, num_recomendaciones=5, alpha=0.5)
 
-    num_cols = 5  # Número de columnas por fila
-    title_height = 60  # Altura fija para los títulos en píxeles
+        # Mostrar recomendaciones en columnas
+        num_cols = 5
+        title_height = 60
+        for i in range(0, len(recomendaciones), num_cols):
+            row_recs = recomendaciones[i:i+num_cols]
+            cols = st.columns(len(row_recs))
+            for col, (titulo, _, poster, score) in zip(cols, row_recs):
+                # Mostrar título en contenedor con scroll si es muy largo
+                col.markdown(
+                    f"""
+                    <div style="
+                        height:{title_height}px;
+                        overflow-y:auto;
+                        text-align:center;
+                        font-weight:bold;
+                        font-size:16px;
+                        margin-bottom:5px;">
+                        {titulo}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+                col.caption(f"Similitud: {int(score*100)}%")
+                if poster:
+                    col.image(poster, width='stretch')  # Sustituye use_container_width
+                else:
+                    col.write("❌ No hay ningún poster disponible")
 
-    # Mostrar recomendaciones en filas
-    for i in range(0, len(recomendaciones), num_cols):
-        row_recs = recomendaciones[i:i+num_cols]
-        cols = st.columns(len(row_recs))
-        for col, (titulo, _, poster, score) in zip(cols, row_recs):
-            # Mostrar título en contenedor con scroll si es muy largo
-            col.markdown(
-                f"""
-                <div style="
-                    height:{title_height}px;
-                    overflow-y:auto;
-                    text-align:center;
-                    font-weight:bold;
-                    font-size:16px;
-                    margin-bottom:5px;">
-                    {titulo}
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-            col.caption(f"Similitud: {int(score*100)}%")
-            if poster:
-                col.image(poster, use_container_width=True)
-            else:
-                col.write("❌ No hay ningún poster disponible")
+    except IndexError:
+        st.error("No se encontró la película seleccionada. Intenta otra.")
+    except Exception as e:
+        st.error(f"Ocurrió un error inesperado: {e}")

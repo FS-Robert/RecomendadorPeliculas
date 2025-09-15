@@ -29,6 +29,9 @@ def obtener_poster(titulo):
 movies = pd.read_csv("movies.csv")
 ratings = pd.read_csv("ratings.csv")
 
+movies = movies.head(500)
+ratings = ratings[ratings['movieId'].isin(movies['movieId'])]
+
 # Limpiar títulos
 movies['clean_title'] = movies['title'].str.replace(r'\(\d{4}\)', '', regex=True).str.strip()
 

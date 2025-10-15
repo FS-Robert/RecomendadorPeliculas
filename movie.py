@@ -31,6 +31,9 @@ ratings = pd.read_csv("ratings.csv", encoding='utf-8')
 movies = movies.head(5000)
 ratings = ratings[ratings['movieId'].isin(movies['movieId'])]
 
+movies = movies.head(500)
+ratings = ratings[ratings['movieId'].isin(movies['movieId'])]
+
 # Limpiar títulos
 movies['clean_title'] = movies['title'].str.replace(r'\(\d{4}\)', '', regex=True).str.strip()
 

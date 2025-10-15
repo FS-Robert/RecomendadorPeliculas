@@ -26,9 +26,9 @@ def obtener_poster(titulo):
 # ==========================
 # Cargar datasets
 # ==========================
-movies = pd.read_csv("movies.csv")
-ratings = pd.read_csv("ratings.csv")
-movies = movies.head(500)
+movies = pd.read_csv('movies.csv', encoding='utf-8')
+ratings = pd.read_csv("ratings.csv", encoding='utf-8')
+movies = movies.head(5000)
 ratings = ratings[ratings['movieId'].isin(movies['movieId'])]
 
 # Limpiar títulos
@@ -52,10 +52,10 @@ content_sim = cosine_similarity(content_matrix, content_matrix)
 content_df = pd.DataFrame(content_sim, index=movies["movieId"], columns=movies["movieId"])
 
 # ==========================
-# Función de recomendación híbrida
+# Función de recomendación 
 # ==========================
 def recomendar_peliculas(movie_id, num_recomendaciones=5, alpha=0.5):
-    """Devuelve una lista de películas recomendadas con posters y puntuación."""
+    """Devuelve una lista de películas recomendadas con  puntuación."""
     try:
         if movie_id not in collab_df or movie_id not in content_df:
             return []
@@ -85,7 +85,7 @@ def recomendar_peliculas(movie_id, num_recomendaciones=5, alpha=0.5):
 st.title("🎬 Recomendador de Películas")
 st.write("Selecciona una película y obtén recomendaciones combinando ratings y contenido:")
 
-pelicula_seleccionada = st.selectbox("Elige una película:", movies["clean_title"].head(500).values)
+pelicula_seleccionada = st.selectbox("Elige una película:", movies["clean_title"].head(5000).values)
 
 if pelicula_seleccionada:
     try:

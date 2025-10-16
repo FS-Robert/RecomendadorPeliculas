@@ -121,7 +121,7 @@ if pelicula_seleccionada:
                     )
                     col.caption(f"Similitud: {int(score*100)}%")
                     if poster:
-                        col.image(poster, width='stretch')  # Sustituye use_container_width
+                        col.image(poster, width='stretch')  
                     else:
                         col.write("❌ No hay ningún poster disponible")
     except IndexError:
